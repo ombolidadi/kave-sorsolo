@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kávé Sorsoló</title>
+<meta name="description" content="Sorsolj kávéfőzési módszert, és kapsz hozzá egy saját receptet.">
+<meta name="theme-color" content="#1c1410">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kávé Sorsoló">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#1c1410; --bg2:#261b15; --card:#2f231c; --card2:#3a2b22; --line:#4a382c;
+  --text:#f6ece3; --muted:#bfa896; --accent:#e0a458; --accent2:#c97b3a; --onaccent:#24170e;
+  --ok:#7fbf7f; --danger:#e07a6a; --shadow:0 10px 30px rgba(0,0,0,.35);
+  --r:18px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+  color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#f7f0e8; --bg2:#efe4d8; --card:#fffaf4; --card2:#f3e8dc; --line:#e0cfbd;
+  --text:#2b1d14; --muted:#7d6553; --accent:#b8692a; --accent2:#8f4a17; --onaccent:#fff8f0;
+  --ok:#3f8a46; --danger:#b8473a; --shadow:0 10px 30px rgba(80,50,20,.15);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f7f0e8; --bg2:#efe4d8; --card:#fffaf4; --card2:#f3e8dc; --line:#e0cfbd;
+    --text:#2b1d14; --muted:#7d6553; --accent:#b8692a; --accent2:#8f4a17; --onaccent:#fff8f0;
+    --ok:#3f8a46; --danger:#b8473a; --shadow:0 10px 30px rgba(80,50,20,.15);
+    color-scheme:light;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior-y:none}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+.app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  padding:calc(var(--safe-t) + 12px) 16px 10px;display:flex;align-items:center;gap:10px}
+header h1{font-size:20px;margin:0;flex:1;letter-spacing:.2px}
+.iconbtn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--card);border:1px solid var(--line);font-size:18px}
+main{flex:1;padding:4px 16px calc(96px + var(--safe-b))}
+.view{display:none}.view.on{display:block;animation:fade .2s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Sorsolás */
+.hero{text-align:center;padding:18px 0 8px}
+.slot{height:150px;border-radius:24px;background:radial-gradient(120% 100% at 50% 0%,var(--card2),var(--card));border:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:var(--shadow);overflow:hidden;position:relative}
+.slot .emo{font-size:52px;line-height:1}
+.slot .nm{font-size:22px;font-weight:700}
+.slot .sub{color:var(--muted);font-size:14px}
+.slot.spin .emo,.slot.spin .nm{animation:tick .08s linear}
+@keyframes tick{from{transform:translateY(-14px);opacity:.3}to{transform:none;opacity:1}}
+.slot.win{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(.94)}100%{transform:scale(1)}}
+.big{margin:18px auto 6px;width:100%;padding:18px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent2));color:var(--onaccent);
+  font-size:20px;font-weight:800;letter-spacing:.3px;box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 35%,transparent);transition:transform .1s}
+.big:active{transform:scale(.97)}
+.big:disabled{opacity:.6}
+.hint{color:var(--muted);font-size:14px;text-align:center;margin:6px 0 0}
+.chk{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:14px;margin-top:10px}
+.chk input{width:18px;height:18px;accent-color:var(--accent)}
+
+.card{scroll-margin-top:80px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-top:16px;box-shadow:var(--shadow)}
+.card h2{margin:0;font-size:20px}
+.card h3{margin:16px 0 8px;font-size:15px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.rname{color:var(--accent);font-weight:600;margin-top:2px}
+.params{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.param{background:var(--card2);border-radius:12px;padding:10px 8px;text-align:center}
+.param b{display:block;font-size:17px}
+.param span{font-size:12px;color:var(--muted)}
+ol.steps{margin:0;padding:0;list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;position:relative;padding:8px 0 8px 40px;border-top:1px solid var(--line)}
+ol.steps li:first-child{border-top:0}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:7px;width:28px;height:28px;border-radius:50%;background:var(--card2);display:grid;place-items:center;font-weight:700;font-size:14px;color:var(--accent)}
+.notes{background:var(--card2);border-radius:12px;padding:10px 12px;color:var(--muted);font-size:14px;white-space:pre-wrap}
+.row{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;padding:13px 14px;border-radius:14px;background:var(--card2);border:1px solid var(--line);font-weight:600}
+.btn.primary{background:var(--accent);color:var(--onaccent);border-color:transparent}
+.btn.danger{color:var(--danger)}
+.btn.sm{flex:none;padding:8px 12px;font-size:14px;border-radius:10px}
+
+/* Időzítő */
+.timer{display:flex;align-items:center;gap:12px;margin-top:14px;background:var(--card2);border-radius:14px;padding:10px 12px}
+.timer .t{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;flex:1}
+.timer .t small{font-size:14px;color:var(--muted);font-weight:500}
+.timer.done .t{color:var(--ok)}
+
+/* Módszerek */
+.list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px}
+.item .emo{font-size:30px;width:44px;height:44px;display:grid;place-items:center;background:var(--card2);border-radius:12px;flex:none}
+.item .info{flex:1;min-width:0}
+.item .info b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .info span{font-size:13px;color:var(--muted)}
+.item.off{opacity:.55}
+.switch{position:relative;width:48px;height:28px;flex:none}
+.switch input{opacity:0;width:0;height:0;position:absolute}
+.switch i{position:absolute;inset:0;border-radius:99px;background:var(--line);transition:.2s}
+.switch i::after{content:"";position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch input:checked+i{background:var(--accent)}
+.switch input:checked+i::after{transform:translateX(20px)}
+.sect{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.sect h2{font-size:18px;margin:0}
+.empty{text-align:center;color:var(--muted);padding:30px 10px}
+
+/* Előzmények */
+.hist{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.hist .emo{font-size:26px}
+.hist .info{flex:1;min-width:0}
+.hist .info span{display:block;font-size:13px;color:var(--muted)}
+.stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pill{background:var(--card2);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:14px}
+
+/* Alsó sáv */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:color-mix(in srgb,var(--bg2) 92%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);padding:8px 8px calc(8px + var(--safe-b))}
+nav.tabs .in{max-width:560px;margin:0 auto;display:flex}
+nav.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-radius:12px;color:var(--muted);font-size:12px;font-weight:600}
+nav.tabs button .i{font-size:22px;line-height:1.1}
+nav.tabs button.on{color:var(--accent);background:var(--card)}
+
+/* Szerkesztő lap */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:20;display:none}
+.sheet-bg.on{display:block;animation:fade .2s}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-width:560px;margin:0 auto;max-height:92vh;max-height:92dvh;overflow:auto;background:var(--bg2);
+  border-radius:22px 22px 0 0;padding:8px 16px calc(20px + var(--safe-b));transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.9,.3,1)}
+.sheet.on{transform:none}
+.grab{width:44px;height:5px;border-radius:9px;background:var(--line);margin:4px auto 10px}
+.sheet h2{margin:0 0 6px;font-size:20px}
+label.f{display:block;margin-top:12px;font-size:13px;font-weight:600;color:var(--muted)}
+label.f input,label.f textarea,label.f select{display:block;width:100%;margin-top:5px;padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:16px;font-weight:400;color:var(--text)}
+label.f textarea{min-height:130px;resize:vertical}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 10px}
+.emopick{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.emopick button{width:42px;height:42px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:22px}
+.emopick button.on{border-color:var(--accent);background:var(--card2);box-shadow:0 0 0 2px var(--accent) inset}
+.recipe{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px}
+.recipe .info{flex:1;min-width:0}
+.recipe .info span{display:block;font-size:13px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(90px + var(--safe-b));transform:translateX(-50%) translateY(20px);opacity:0;z-index:40;background:var(--text);color:var(--bg);
+  padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;transition:.25s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+@media (max-width:360px){.params{grid-template-columns:repeat(2,1fr)}.grid3{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1 id="title">☕ Kávé Sorsoló</h1>
+    <button class="iconbtn" id="themeBtn" aria-label="Téma váltása">🌓</button>
+  </header>
+
+  <main>
+    <!-- Sorsolás -->
+    <section class="view on" id="v-draw">
+      <div class="hero">
+        <div class="slot" id="slot">
+          <div class="emo" id="slotEmo">☕</div>
+          <div class="nm" id="slotName">Mit főzzünk ma?</div>
+          <div class="sub" id="slotSub">Nyomd meg a gombot!</div>
+        </div>
+        <button class="big" id="drawBtn">🎲 Sorsolj!</button>
+        <label class="chk"><input type="checkbox" id="noRepeat"> Ne legyen ugyanaz, mint legutóbb</label>
+        <p class="hint" id="poolHint"></p>
+      </div>
+      <div id="result"></div>
+    </section>
+
+    <!-- Módszerek -->
+    <section class="view" id="v-methods">
+      <div class="sect"><h2>Főzési módszerek</h2><button class="btn sm primary" id="addMethod">＋ Új</button></div>
+      <p class="muted small">A kapcsolóval eldöntheted, hogy egy módszer részt vegyen-e a sorsolásban. Koppints egy módszerre a receptek szerkesztéséhez.</p>
+      <div class="list" id="methodList"></div>
+      <div class="card">
+        <h3 style="margin-top:0">Adatok</h3>
+        <p class="muted small" style="margin-top:0">Minden adat csak ezen az eszközön, a böngészőben tárolódik. Másik eszközre JSON-fájllal viheted át.</p>
+        <div class="row" style="flex-wrap:wrap">
+          <button class="btn sm" id="exportBtn">⬇️ Exportálás</button>
+          <button class="btn sm" id="importBtn">⬆️ Betöltés</button>
+          <button class="btn sm danger" id="resetBtn">↺ Alapértékek</button>
+        </div>
+        <input type="file" id="importFile" accept="application/json,.json" hidden>
+      </div>
+    </section>
+
+    <!-- Előzmények -->
+    <section class="view" id="v-history">
+      <div class="sect"><h2>Előzmények</h2><button class="btn sm danger" id="clearHist">Törlés</button></div>
+      <div class="stats" id="stats"></div>
+      <div id="histList"></div>
+    </section>
+  </main>
+
+  <nav class="tabs"><div class="in">
+    <button data-tab="draw" class="on"><span class="i">🎲</span>Sorsolás</button>
+    <button data-tab="methods"><span class="i">📋</span>Módszerek</button>
+    <button data-tab="history"><span class="i">🕘</span>Előzmények</button>
+  </div></nav>
+</div>
+
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const KEY='kave-sorsolo-v1';
+const EMOJIS=['☕','🫖','🧪','⚗️','🔥','🧊','🥛','🍵','🫗','💧','⏳','🌋','🏺','🥤','⭐','🍫'];
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function R(name,coffee,water,grind,temp,time,steps,notes=''){return{id:uid(),name,coffee,water,grind,temp,time,steps,notes}}
+function defaults(){
+  const M=(name,emoji,recipes)=>({id:uid(),name,emoji,active:true,recipes});
+  return{methods:[
+    M('V60','☕',[
+      R('Klasszikus 1:16','15 g','250 ml','közepes-finom','93 °C','3:00',[
+        'Öblítsd át a papírfiltert forró vízzel, a vizet öntsd ki.',
+        'Szórd bele a kávét, rázd egyenletesre, csinálj középre egy kis mélyedést.',
+        'Előáztatás: 40 ml víz, óvatosan megkeverve, várj 40 másodpercet.',
+        'Lassú, körkörös mozdulatokkal öntsd fel 150 ml-ig (kb. 1:15-ig).',
+        'Folytasd 250 ml-ig (kb. 1:45-ig), majd finoman forgasd meg a tölcsért.',
+        'Hagyd lefolyni – kb. 3:00-ra legyen kész.'],
+        'Ha savanyú, őröld finomabbra; ha keserű, durvábbra.')]),
+    M('French press','🫖',[
+      R('Hosszú áztatás','30 g','500 ml','durva','94 °C','4:00 + 5 perc',[
+        'Szórd a kávét a kannába, és öntsd rá az összes vizet.',
+        'Várj 4 percet keverés nélkül.',
+        'Egy kanállal törd fel a tetején a kérget, és szedd le a habot.',
+        'Tedd rá a fedőt, és várj még 5 percet.',
+        'A dugattyút csak a felszínig nyomd le, és lassan töltsd ki.'],
+        'Az extra várakozástól tisztább, üledékmentesebb lesz a csésze.')]),
+    M('AeroPress','🧪',[
+      R('Klasszikus','15 g','200 ml','közepes-finom','85 °C','2:00',[
+        'Tedd be a papírfiltert, öblítsd át, és tedd a bögrére az AeroPresst.',
+        'Szórd bele a kávét, öntsd rá a vizet, és keverd meg 10-szer.',
+        'Tedd bele a dugattyút (ne nyomd), hogy ne csöpögjön, és várj 1:30-ig.',
+        'Kavard meg óvatosan még egyszer, majd 30 mp alatt egyenletesen nyomd le.']),
+      R('Fordított, erős','18 g','150 ml + hígítás','finom','90 °C','1:45',[
+        'Állítsd fejjel lefelé az AeroPresst, a dugattyú kb. a 4-es jelnél legyen.',
+        'Szórd bele a kávét, öntsd rá a vizet, keverd meg.',
+        'Csavard rá a beáztatott filteres kupakot, várj 1 percet.',
+        'Fordítsd a bögrére, és 30 mp alatt nyomd le.',
+        'Ízlés szerint hígítsd forró vízzel vagy tejjel.'],
+        'Jó alap tejes kávékhoz is.')]),
+    M('Kotyogós (moka)','🔥',[
+      R('Kotyogós alaprecept','kb. 18 g (tele szűrő)','a szelep aljáig','finom (nem eszpresszó)','előmelegített víz','4–5 perc',[
+        'Forralj vizet, és töltsd az alsó tartályba a szelep aljáig.',
+        'Töltsd a kávét a szűrőbe lazán, ne tömörítsd, a szélét töröld le.',
+        'Csavard össze (konyharuhával fogd, forró!), és tedd közepes lángra, nyitott fedővel.',
+        'Amikor elindul a kávé, vedd lejjebb a lángot.',
+        'Amint sistergő, világos sugárban jön, vedd le, és hűtsd le az alját hideg vízzel.'],
+        'Az előmelegített víztől nem „fő meg” a kávé, kevésbé lesz keserű.')]),
+    M('Chemex','⚗️',[
+      R('Nagy adag','30 g','500 ml','közepes-durva','94 °C','4:30',[
+        'Tedd be a filtert úgy, hogy a háromrétegű oldala a kiöntő felé nézzen, öblítsd át.',
+        'Szórd bele a kávét, és öntsd rá 60 ml vízzel, várj 45 mp-et.',
+        'Lassan, körkörösen öntsd fel 300 ml-ig.',
+        'Amikor kissé leapadt, folytasd 500 ml-ig.',
+        'Hagyd lefolyni, kb. 4:30-ra legyen kész. Vedd ki a filtert, és forgasd meg a kancsót.'])]),
+    M('Cold brew','🧊',[
+      R('Hidegáztatás','100 g','1000 ml','durva','hideg víz','12–18 óra',[
+        'Keverd össze a kávét és a hideg vizet egy nagy üvegben.',
+        'Fedd le, és tedd a hűtőbe 12–18 órára.',
+        'Szűrd át egy szitán, majd papírfilteren.',
+        'Hígítsd 1:1 arányban vízzel vagy tejjel, és tálald jéggel.'],
+        'Hűtőben kb. egy hétig eláll.')]),
+    M('Török kávé (dzezva)','🏺',[
+      R('Hagyományos','7 g','70 ml','nagyon finom (por)','hideg víz','2–3 perc',[
+        'Tedd a dzezvába a hideg vizet, a kávét és ízlés szerint a cukrot.',
+        'Keverd el, és tedd kis lángra.',
+        'Ne forrald fel: amikor a hab emelkedni kezd, vedd le.',
+        'Kanalazd a habot a csészébe, majd töltsd rá a kávét.',
+        'Várj egy percet, hogy a zacc leülepedjen.'])])
+  ],history:[],settings:{noRepeat:true,lastPick:null}};
+}
+
+let S;
+function load(){
+  try{const raw=localStorage.getItem(KEY);if(raw){S=JSON.parse(raw)}}catch(e){}
+  if(!S||!Array.isArray(S.methods)){S=defaults()}
+  S.history=S.history||[];S.settings=Object.assign({noRepeat:true,lastPick:null},S.settings||{});
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Nem sikerült menteni')}}
+
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2000)}
+function vibrate(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+
+/* ---- Téma ---- */
+function applyTheme(){const t=localStorage.getItem('kave-theme');if(t)document.documentElement.dataset.theme=t;else delete document.documentElement.dataset.theme}
+$('#themeBtn').onclick=()=>{
+  const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+  try{localStorage.setItem('kave-theme',cur==='light'?'dark':'light')}catch(e){}
+  applyTheme();
+};
+
+/* ---- Fülek ---- */
+document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function showTab(t){
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+t));
+  if(t==='methods')renderMethods();
+  if(t==='history')renderHistory();
+  if(t==='draw')renderPoolHint();
+  scrollTo(0,0);
+}
+
+/* ---- Sorsolás ---- */
+const pool=()=>S.methods.filter(m=>m.active&&m.recipes.length);
+function renderPoolHint(){
+  const p=pool(),n=S.methods.filter(m=>m.active&&!m.recipes.length).length;
+  let h=p.length?`${p.length} módszer van a kalapban.`:'Nincs sorsolható módszer – adj hozzá egyet receptekkel a Módszerek fülön!';
+  if(n)h+=` (${n} bekapcsolt módszernek még nincs receptje.)`;
+  $('#poolHint').textContent=h;
+  $('#drawBtn').disabled=!p.length;
+  $('#noRepeat').checked=!!S.settings.noRepeat;
+}
+$('#noRepeat').onchange=e=>{S.settings.noRepeat=e.target.checked;save()};
+
+let spinning=false;
+$('#drawBtn').onclick=()=>{
+  if(spinning)return;
+  const p=pool();if(!p.length)return;
+  let cand=p;
+  if(S.settings.noRepeat&&p.length>1&&S.settings.lastPick)cand=p.filter(m=>m.id!==S.settings.lastPick.methodId);
+  const m=cand[Math.floor(Math.random()*cand.length)];
+  let rc=m.recipes;
+  if(S.settings.noRepeat&&rc.length>1&&p.length===1&&S.settings.lastPick)rc=rc.filter(r=>r.id!==S.settings.lastPick.recipeId);
+  const r=rc[Math.floor(Math.random()*rc.length)];
+  spin(p,m,r);
+};
+function spin(p,m,r){
+  spinning=true;$('#drawBtn').disabled=true;$('#result').innerHTML='';
+  const slot=$('#slot');slot.classList.remove('win');
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const total=reduce?1:22;let i=0,idx=Math.floor(Math.random()*p.length);
+  const step=()=>{
+    i++;
+    if(i>=total){
+      setSlot(m.emoji,m.name,r.name);slot.classList.remove('spin');void slot.offsetWidth;slot.classList.add('win');
+      vibrate([30,40,60]);
+      S.settings.lastPick={methodId:m.id,recipeId:r.id};save();
+      showResult(m,r);spinning=false;$('#drawBtn').disabled=false;$('#drawBtn').textContent='🎲 Újra sorsolok';
+      return;
+    }
+    idx=(idx+1)%p.length;
+    setSlot(p[idx].emoji,p[idx].name,'…');
+    slot.classList.remove('spin');void slot.offsetWidth;slot.classList.add('spin');
+    if(i%3===0)vibrate(5);
+    setTimeout(step,40+Math.pow(i/total,3)*320);
+  };
+  step();
+}
+function setSlot(e,n,s){$('#slotEmo').textContent=e||'☕';$('#slotName').textContent=n;$('#slotSub').textContent=s}
+
+function recipeHTML(m,r){
+  const params=[['⚖️',r.coffee,'kávé'],['💧',r.water,'víz'],['⚙️',r.grind,'őrlés'],['🌡️',r.temp,'hőfok'],['⏱️',r.time,'idő']].filter(x=>x[1]);
+  const ratio=calcRatio(r.coffee,r.water);
+  if(ratio)params.push(['📐','1:'+ratio,'arány']);
+  return `<h2>${esc(m.emoji)} ${esc(m.name)}</h2><div class="rname">${esc(r.name)}</div>
+  ${params.length?`<div class="params">${params.map(p=>`<div class="param"><b>${esc(p[1])}</b><span>${p[0]} ${p[2]}</span></div>`).join('')}</div>`:''}
+  ${r.steps.length?`<h3>Lépések</h3><ol class="steps">${r.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`:''}
+  ${r.notes?`<h3>Megjegyzés</h3><div class="notes">${esc(r.notes)}</div>`:''}`;
+}
+function calcRatio(c,w){
+  const a=parseFloat(String(c).replace(',','.')),b=parseFloat(String(w).replace(',','.'));
+  if(!(a>0&&b>0)||!/g/.test(c)||!/(ml|g)/.test(w))return'';
+  const x=b/a;return x>=1?(Math.round(x*10)/10).toString().replace('.',','):'';
+}
+function parseSecs(t){const mm=/^(\d+):(\d{2})/.exec(String(t||'').trim());return mm?(+mm[1])*60+(+mm[2]):0}
+
+let timerI=null,timerEnd=0,timerLeft=0;
+function showResult(m,r){
+  const secs=parseSecs(r.time);
+  $('#result').innerHTML=`<div class="card">${recipeHTML(m,r)}
+    ${secs?`<div class="timer" id="timer"><div class="t" id="tval">${fmt(secs)} <small>időzítő</small></div><button class="btn sm primary" id="tbtn">▶︎ Indítás</button><button class="btn sm" id="treset">↺</button></div>`:''}
+    <div class="row"><button class="btn" id="otherRecipe" ${m.recipes.length>1?'':'hidden'}>🔀 Másik recept</button><button class="btn primary" id="brewed">✅ Elkészítettem</button></div></div>`;
+  stopTimer();timerLeft=secs;
+  if(secs){
+    $('#tbtn').onclick=()=>{if(timerI){timerLeft=Math.max(0,Math.round((timerEnd-Date.now())/1000));stopTimer();$('#tbtn').textContent='▶︎ Folytatás'}else startTimer()};
+    $('#treset').onclick=()=>{stopTimer();timerLeft=secs;$('#tval').innerHTML=fmt(secs)+' <small>időzítő</small>';$('#timer').classList.remove('done');$('#tbtn').textContent='▶︎ Indítás'};
+  }
+  const o=$('#otherRecipe');
+  o.onclick=()=>{const rs=m.recipes.filter(x=>x.id!==r.id);const nr=rs[Math.floor(Math.random()*rs.length)];setSlot(m.emoji,m.name,nr.name);S.settings.lastPick={methodId:m.id,recipeId:nr.id};save();showResult(m,nr)};
+  $('#brewed').onclick=()=>{
+    S.history.unshift({ts:Date.now(),methodId:m.id,recipeId:r.id,method:m.name,emoji:m.emoji,recipe:r.name});
+    S.history=S.history.slice(0,300);save();toast('Felírva az előzményekbe. Jó kávézást! ☕');
+    $('#brewed').disabled=true;$('#brewed').textContent='✅ Felírva';
+  };
+  setTimeout(()=>$('#result .card')?.scrollIntoView({behavior:'smooth',block:'start'}),150);
+}
+function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+function startTimer(){
+  if(timerLeft<=0)return;
+  timerEnd=Date.now()+timerLeft*1000;$('#tbtn').textContent='⏸ Szünet';
+  timerI=setInterval(()=>{
+    const left=Math.max(0,Math.round((timerEnd-Date.now())/1000));
+    const el=$('#tval');if(!el){stopTimer();return}
+    el.innerHTML=fmt(left)+' <small>hátra</small>';
+    if(left<=0){stopTimer();timerLeft=0;el.innerHTML='Kész! <small>☕</small>';$('#timer').classList.add('done');$('#tbtn').textContent='▶︎ Indítás';vibrate([200,100,200,100,400])}
+  },250);
+}
+function stopTimer(){clearInterval(timerI);timerI=null}
+
+/* ---- Módszerek ---- */
+function renderMethods(){
+  const L=$('#methodList');
+  if(!S.methods.length){L.innerHTML='<div class="empty">Még nincs egy módszer sem. Adj hozzá egyet a ＋ Új gombbal!</div>';return}
+  L.innerHTML=S.methods.map(m=>`<div class="item ${m.active?'':'off'}" data-id="${m.id}">
+    <div class="emo">${esc(m.emoji)}</div>
+    <div class="info"><b>${esc(m.name)}</b><span>${m.recipes.length?m.recipes.length+' recept':'nincs recept'}</span></div>
+    <label class="switch" aria-label="Részt vesz a sorsolásban"><input type="checkbox" ${m.active?'checked':''}><i></i></label></div>`).join('');
+  L.querySelectorAll('.item').forEach(el=>{
+    const m=S.methods.find(x=>x.id===el.dataset.id);
+    el.querySelector('.switch').onclick=e=>e.stopPropagation();
+    el.querySelector('input').onchange=e=>{m.active=e.target.checked;save();el.classList.toggle('off',!m.active)};
+    el.onclick=()=>editMethod(m.id);
+  });
+}
+$('#addMethod').onclick=()=>editMethod(null);
+
+/* ---- Lap (bottom sheet) ---- */
+const sheetStack=[];
+function openSheet(html,bind){
+  const sh=$('#sheet');sh.innerHTML='<div class="grab"></div>'+html;bind(sh);
+  $('#sheetBg').classList.add('on');requestAnimationFrame(()=>sh.classList.add('on'));sh.scrollTop=0;
+}
+function closeSheet(){$('#sheet').classList.remove('on');$('#sheetBg').classList.remove('on');sheetStack.length=0}
+$('#sheetBg').onclick=()=>{if(confirm('Bezárod mentés nélkül?'))closeSheet()};
+
+let draft=null;
+function editMethod(id){
+  const orig=id?S.methods.find(m=>m.id===id):null;
+  draft=orig?JSON.parse(JSON.stringify(orig)):{id:uid(),name:'',emoji:'☕',active:true,recipes:[]};
+  draft._new=!orig;
+  methodSheet();
+}
+function methodSheet(){
+  const d=draft;
+  openSheet(`<h2>${d._new?'Új módszer':'Módszer szerkesztése'}</h2>
+    <label class="f">Név<input id="mName" value="${esc(d.name)}" placeholder="pl. V60, French press…" maxlength="40"></label>
+    <label class="f">Ikon</label>
+    <div class="emopick" id="emoPick">${EMOJIS.map(e=>`<button type="button" class="${e===d.emoji?'on':''}">${e}</button>`).join('')}</div>
+    <div class="sect" style="margin-top:18px"><h2 style="font-size:16px">Receptek</h2><button class="btn sm" id="addRecipe">＋ Recept</button></div>
+    <div id="recList">${d.recipes.length?d.recipes.map((r,i)=>`<div class="recipe" data-i="${i}"><div class="info"><b>${esc(r.name||'Névtelen recept')}</b><span>${esc([r.coffee,r.water,r.grind].filter(Boolean).join(' · '))||'—'}</span></div><span class="muted">›</span></div>`).join(''):'<p class="muted small">Még nincs recept. Sorsolni csak olyan módszert lehet, amelynek van legalább egy receptje.</p>'}</div>
+    <div class="row"><button class="btn" id="mCancel">Mégse</button><button class="btn primary" id="mSave">Mentés</button></div>
+    ${d._new?'':'<div class="row"><button class="btn danger" id="mDel">🗑 Módszer törlése</button></div>'}`,sh=>{
+    const nm=sh.querySelector('#mName');nm.oninput=()=>d.name=nm.value;
+    sh.querySelectorAll('#emoPick button').forEach(b=>b.onclick=()=>{d.emoji=b.textContent;sh.querySelectorAll('#emoPick button').forEach(x=>x.classList.toggle('on',x===b))});
+    sh.querySelector('#addRecipe').onclick=()=>recipeSheet(null);
+    sh.querySelectorAll('.recipe').forEach(el=>el.onclick=()=>recipeSheet(+el.dataset.i));
+    sh.querySelector('#mCancel').onclick=closeSheet;
+    sh.querySelector('#mSave').onclick=()=>{
+      d.name=d.name.trim();if(!d.name){toast('Adj nevet a módszernek!');nm.focus();return}
+      const isNew=d._new;delete d._new;
+      if(isNew)S.methods.push(d);else S.methods[S.methods.findIndex(m=>m.id===d.id)]=d;
+      save();closeSheet();renderMethods();renderPoolHint();toast(isNew?'Módszer hozzáadva':'Mentve');
+    };
+    const del=sh.querySelector('#mDel');
+    if(del)del.onclick=()=>{if(!confirm(`Biztosan törlöd: ${d.name}?`))return;S.methods=S.methods.filter(m=>m.id!==d.id);save();closeSheet();renderMethods();renderPoolHint();toast('Törölve')};
+    if(d._new&&!d.name)setTimeout(()=>nm.focus(),300);
+  });
+}
+function recipeSheet(i){
+  const d=draft,r=i==null?R('','','','','','',[],''):Object.assign({},d.recipes[i]);
+  openSheet(`<h2>${i==null?'Új recept':'Recept szerkesztése'}</h2><p class="muted small" style="margin:0">${esc(d.emoji)} ${esc(d.name||'Új módszer')}</p>
+    <label class="f">Recept neve<input id="rName" value="${esc(r.name)}" placeholder="pl. Klasszikus, Erős, Jeges…" maxlength="50"></label>
+    <div class="grid2">
+      <label class="f">Kávé<input id="rCoffee" value="${esc(r.coffee)}" placeholder="pl. 15 g"></label>
+      <label class="f">Víz<input id="rWater" value="${esc(r.water)}" placeholder="pl. 250 ml"></label>
+      <label class="f">Őrlés<input id="rGrind" value="${esc(r.grind)}" placeholder="pl. közepes-finom"></label>
+      <label class="f">Hőfok<input id="rTemp" value="${esc(r.temp)}" placeholder="pl. 93 °C"></label>
+    </div>
+    <label class="f">Idő <span style="font-weight:400">(perc:mp formában – pl. 3:00 – időzítő is jár hozzá)</span><input id="rTime" value="${esc(r.time)}" placeholder="pl. 3:00"></label>
+    <label class="f">Lépések <span style="font-weight:400">(soronként egy)</span><textarea id="rSteps" placeholder="Öblítsd át a filtert…&#10;Előáztatás 30 mp…">${esc(r.steps.join('\n'))}</textarea></label>
+    <label class="f">Megjegyzés<textarea id="rNotes" style="min-height:70px" placeholder="Tippek, babfajta, bármi…">${esc(r.notes)}</textarea></label>
+    <div class="row"><button class="btn" id="rBack">‹ Vissza</button><button class="btn primary" id="rSave">Recept kész</button></div>
+    ${i==null?'':'<div class="row"><button class="btn danger" id="rDel">🗑 Recept törlése</button></div>'}`,sh=>{
+    const v=id=>sh.querySelector(id).value.trim();
+    sh.querySelector('#rBack').onclick=methodSheet;
+    sh.querySelector('#rSave').onclick=()=>{
+      const nr=Object.assign(r,{name:v('#rName')||'Alaprecept',coffee:v('#rCoffee'),water:v('#rWater'),grind:v('#rGrind'),temp:v('#rTemp'),time:v('#rTime'),
+        steps:sh.querySelector('#rSteps').value.split('\n').map(s=>s.trim()).filter(Boolean),notes:v('#rNotes')});
+      if(i==null)d.recipes.push(nr);else d.recipes[i]=nr;
+      methodSheet();toast('Recept rögzítve – ne felejtsd el menteni a módszert!');
+    };
+    const del=sh.querySelector('#rDel');
+    if(del)del.onclick=()=>{if(!confirm('Törlöd ezt a receptet?'))return;d.recipes.splice(i,1);methodSheet()};
+  });
+}
+
+/* ---- Előzmények ---- */
+function renderHistory(){
+  const H=S.history;
+  if(!H.length){$('#stats').innerHTML='';$('#histList').innerHTML='<div class="empty">Még nincs bejegyzés. Sorsolás után az „Elkészítettem” gombbal kerül ide egy kávé.</div>';return}
+  const cnt={};H.forEach(h=>{const k=h.emoji+' '+h.method;cnt[k]=(cnt[k]||0)+1});
+  $('#stats').innerHTML=`<span class="pill">Összesen: <b>${H.length}</b></span>`+Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<span class="pill">${esc(k)}: <b>${n}</b></span>`).join('');
+  const df=new Intl.DateTimeFormat('hu-HU',{month:'short',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit'});
+  $('#histList').innerHTML=H.map(h=>`<div class="hist"><div class="emo">${esc(h.emoji)}</div><div class="info"><b>${esc(h.method)}</b><span>${esc(h.recipe)} · ${df.format(new Date(h.ts))}</span></div></div>`).join('');
+}
+$('#clearHist').onclick=()=>{if(!S.history.length)return;if(confirm('Törlöd az összes előzményt?')){S.history=[];save();renderHistory()}};
+
+/* ---- Export / import / reset ---- */
+$('#exportBtn').onclick=()=>{
+  const blob=new Blob([JSON.stringify({app:'kave-sorsolo',version:1,methods:S.methods,history:S.history},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='kave-sorsolo-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+$('#importBtn').onclick=()=>$('#importFile').click();
+$('#importFile').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{
+    const j=JSON.parse(await f.text());
+    if(!Array.isArray(j.methods))throw 0;
+    const methods=j.methods.filter(m=>m&&typeof m.name==='string').map(m=>({id:String(m.id||uid()),name:m.name,emoji:String(m.emoji||'☕'),active:m.active!==false,
+      recipes:(Array.isArray(m.recipes)?m.recipes:[]).map(r=>({id:String(r.id||uid()),name:String(r.name||'Recept'),coffee:String(r.coffee||''),water:String(r.water||''),grind:String(r.grind||''),
+        temp:String(r.temp||''),time:String(r.time||''),steps:(Array.isArray(r.steps)?r.steps:[]).map(String),notes:String(r.notes||'')}))}));
+    if(!confirm(`${methods.length} módszert találtam. Lecseréljem vele a mostani listát?`))return;
+    S.methods=methods;if(Array.isArray(j.history))S.history=j.history.filter(h=>h&&h.ts);S.settings.lastPick=null;
+    save();renderMethods();renderPoolHint();toast('Betöltve');
+  }catch(err){toast('Ez nem egy Kávé Sorsoló mentés.')}
+};
+$('#resetBtn').onclick=()=>{
+  if(!confirm('Visszaállítod az alapértelmezett módszereket és recepteket? A saját módszereid elvesznek (az előzmények maradnak).'))return;
+  const h=S.history;S=defaults();S.history=h;save();renderMethods();renderPoolHint();toast('Alapértékek visszaállítva');
+};
+
+/* ---- Indítás ---- */
+applyTheme();load();save();renderPoolHint();
+if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
